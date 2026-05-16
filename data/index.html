@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SmartScale</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f7f8;
+      --panel: #ffffff;
+      --text: #172026;
+      --muted: #64727b;
+      --line: #d7e0e4;
+      --accent: #0b756b;
+      --accent-strong: #085d56;
+      --danger: #ad241d;
+      --warn: #8a6000;
+      --ok: #176b3a;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 16px;
+    }
+
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      padding: 14px clamp(16px, 4vw, 40px);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.32rem;
+      font-weight: 750;
+      letter-spacing: 0;
+      overflow-wrap: anywhere;
+    }
+
+    nav {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 22px clamp(16px, 4vw, 40px) 40px;
+      display: grid;
+      gap: 22px;
+    }
+
+    section,
+    form {
+      display: grid;
+      gap: 14px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 750;
+      letter-spacing: 0;
+    }
+
+    .status-line {
+      grid-column: 1 / -1;
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 0.9rem;
+    }
+
+    .view {
+      display: grid;
+      gap: 22px;
+    }
+
+    .view[hidden],
+    [hidden] {
+      display: none;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+    }
+
+    .metric,
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .metric {
+      min-height: 92px;
+      display: grid;
+      align-content: space-between;
+      gap: 10px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 650;
+    }
+
+    .metric strong {
+      font-size: 1.35rem;
+      font-weight: 760;
+      letter-spacing: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .metric.primary {
+      grid-column: span 2;
+    }
+
+    .metric.primary strong {
+      font-size: 2.2rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 650;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px 10px;
+      font: inherit;
+      color: var(--text);
+      background: #ffffff;
+    }
+
+    input:focus,
+    select:focus {
+      outline: 2px solid rgba(11, 117, 107, 0.2);
+      border-color: var(--accent);
+    }
+
+    .checkbox {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 42px;
+      color: var(--text);
+    }
+
+    .checkbox input {
+      width: 18px;
+      min-height: 18px;
+      accent-color: var(--accent);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    button {
+      min-height: 42px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 9px 14px;
+      color: #ffffff;
+      background: var(--accent);
+      font: inherit;
+      font-weight: 750;
+      cursor: pointer;
+    }
+
+    button:hover:not(:disabled) {
+      background: var(--accent-strong);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+    }
+
+    button.secondary {
+      background: #ffffff;
+      color: var(--text);
+      border-color: var(--line);
+    }
+
+    button.secondary:hover:not(:disabled),
+    button.secondary.active {
+      background: #edf2f4;
+    }
+
+    button.danger {
+      background: var(--danger);
+    }
+
+    .message {
+      min-height: 24px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .message.ok {
+      color: var(--ok);
+    }
+
+    .message.warn {
+      color: var(--warn);
+    }
+
+    .message.error {
+      color: var(--danger);
+    }
+
+    @media (max-width: 640px) {
+      header {
+        grid-template-columns: 1fr;
+      }
+
+      nav {
+        justify-content: flex-start;
+      }
+
+      .metric.primary {
+        grid-column: span 1;
+      }
+
+      .metric.primary strong {
+        font-size: 1.85rem;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="title">SmartScale</h1>
+    <nav>
+      <button class="secondary active" id="navDashboard" type="button">Dashboard</button>
+      <button class="secondary" id="navSettings" type="button">Einstellungen</button>
+    </nav>
+    <div class="status-line">
+      <span id="wifiStatus">WLAN: -</span>
+      <span id="ipAddress">IP: -</span>
+      <span id="lastUpdate">Aktualisiert: -</span>
+    </div>
+  </header>
+
+  <main>
+    <div id="dashboardView" class="view">
+      <section>
+        <h2>Dashboard</h2>
+        <div class="grid">
+          <div class="metric primary">
+            <span>Gewicht</span>
+            <strong id="weight">-</strong>
+          </div>
+          <div class="metric primary">
+            <span>Fuellstand</span>
+            <strong id="fillPercent">-</strong>
+          </div>
+          <div class="metric">
+            <span>Inhalt</span>
+            <strong id="fillLiters">-</strong>
+          </div>
+          <div class="metric">
+            <span>Biergewicht</span>
+            <strong id="beerWeightKg">-</strong>
+          </div>
+          <div class="metric">
+            <span>Rohwert</span>
+            <strong id="raw">-</strong>
+          </div>
+          <div class="metric">
+            <span>HX711</span>
+            <strong id="hx711Ready">-</strong>
+          </div>
+          <div class="metric">
+            <span>Betriebstemperatur</span>
+            <strong id="warmupState">-</strong>
+          </div>
+          <div class="metric">
+            <span>Server-Sync</span>
+            <strong id="serverSync">-</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="initialSetupPanel">
+        <h2>Erst-Setup</h2>
+        <div class="actions">
+          <button id="tareButtonSetup" type="button">Tarieren</button>
+        </div>
+        <form id="calibrationFormSetup">
+          <div class="form-grid">
+            <label>
+              Referenzgewicht in kg
+              <input id="knownWeightKgSetup" type="number" min="0.001" step="0.001" inputmode="decimal" placeholder="1.000">
+            </label>
+          </div>
+          <div class="actions">
+            <button id="calibrationButtonSetup" type="submit">Kalibrieren</button>
+          </div>
+        </form>
+        <div id="setupFeedback" class="message"></div>
+      </section>
+    </div>
+
+    <div id="settingsView" class="view" hidden>
+      <section class="panel">
+        <h2>Waage</h2>
+        <div class="actions">
+          <button id="tareButtonSettings" type="button">Tarieren</button>
+        </div>
+        <form id="calibrationFormSettings">
+          <div class="form-grid">
+            <label>
+              Referenzgewicht in kg
+              <input id="knownWeightKgSettings" type="number" min="0.001" step="0.001" inputmode="decimal" placeholder="1.000">
+            </label>
+          </div>
+          <div class="actions">
+            <button id="calibrationButtonSettings" type="submit">Kalibrieren</button>
+          </div>
+        </form>
+        <div id="settingsFeedback" class="message"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Einstellungen</h2>
+        <form id="settingsForm">
+          <div class="form-grid">
+            <label>
+              Geraetename
+              <input id="deviceName" type="text" maxlength="48" autocomplete="off">
+            </label>
+            <label>
+              WLAN-SSID
+              <input id="wifiSsid" type="text" maxlength="64" autocomplete="off">
+            </label>
+            <label>
+              WLAN-Passwort
+              <input id="wifiPassword" type="password" maxlength="64" autocomplete="new-password">
+            </label>
+            <label>
+              Messintervall in ms
+              <input id="measureIntervalMs" type="number" min="100" max="60000" step="100">
+            </label>
+            <label>
+              Mittelwerte
+              <input id="sampleCount" type="number" min="1" max="50" step="1">
+            </label>
+            <label>
+              Einheit
+              <select id="unit">
+                <option value="kg">kg</option>
+                <option value="g">g</option>
+              </select>
+            </label>
+            <label>
+              Leergewicht Keg in kg
+              <input id="emptyKegWeightKg" type="number" min="0" max="80" step="0.001" inputmode="decimal">
+            </label>
+            <label>
+              Maximaler Fuellstand in Liter
+              <input id="maxKegVolumeL" type="number" min="0.1" max="200" step="0.1" inputmode="decimal">
+            </label>
+            <label>
+              Plaato-Server
+              <input id="serverUrl" type="text" inputmode="url" autocomplete="off" placeholder="devices.bierwand.de">
+            </label>
+            <label>
+              Plaato-Port
+              <input id="serverPort" type="number" min="1" max="65535" step="1">
+            </label>
+            <label>
+              Geraete-Token
+              <input id="deviceToken" type="text" autocomplete="off">
+            </label>
+          </div>
+          <label class="checkbox">
+            <input id="serverSyncEnabled" type="checkbox">
+            Server-Sync aktivieren
+          </label>
+          <div class="actions">
+            <button type="submit">Einstellungen speichern</button>
+            <button class="secondary" id="restartButton" type="button">Neustart</button>
+            <button class="danger" id="factoryResetButton" type="button">Werkseinstellungen zuruecksetzen</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <div id="message" class="message"></div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const message = $("message");
+    let settings = { unit: "kg" };
+    let lastStatus = {};
+
+    function setMessage(text, type = "", target = message) {
+      target.textContent = text || "";
+      target.className = "message" + (type ? " " + type : "");
+    }
+
+    function showView(name) {
+      const dashboard = name === "dashboard";
+      $("dashboardView").hidden = !dashboard;
+      $("settingsView").hidden = dashboard;
+      $("navDashboard").classList.toggle("active", dashboard);
+      $("navSettings").classList.toggle("active", !dashboard);
+    }
+
+    async function api(path, options = {}) {
+      const response = await fetch(path, {
+        headers: { "Content-Type": "application/json" },
+        ...options
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.message || "HTTP " + response.status);
+      }
+      return data;
+    }
+
+    function formatWeight(weightKg, unit) {
+      if (unit === "g") {
+        return (Number(weightKg) * 1000).toFixed(0) + " g";
+      }
+      return Number(weightKg || 0).toFixed(3) + " kg";
+    }
+
+    function formatMs(ms) {
+      const totalSeconds = Math.ceil(Number(ms || 0) / 1000);
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return minutes + ":" + String(seconds).padStart(2, "0");
+    }
+
+    function setCalibrationState(data) {
+      const ready = Boolean(data.calibrationAllowed);
+      const reason = data.calibrationBlockReason || "";
+      for (const id of ["calibrationButtonSetup", "calibrationButtonSettings"]) {
+        $(id).disabled = !ready;
+        $(id).title = ready ? "" : reason;
+      }
+
+      if (data.warmupRemainingMs > 0) {
+        $("warmupState").textContent = formatMs(data.warmupRemainingMs);
+      } else if (!data.hx711Ready) {
+        $("warmupState").textContent = "HX711";
+      } else if (!ready) {
+        $("warmupState").textContent = "Stabilisiert";
+      } else {
+        $("warmupState").textContent = "Bereit";
+      }
+    }
+
+    function updateStatusView(data) {
+      lastStatus = data;
+      const unit = data.unit || settings.unit || "kg";
+      $("title").textContent = data.deviceName || "SmartScale";
+      $("weight").textContent = formatWeight(data.weightKg || 0, unit);
+      $("fillPercent").textContent = Number(data.fillPercent || 0).toFixed(1) + " %";
+      $("fillLiters").textContent = Number(data.fillLiters || 0).toFixed(2) + " l";
+      $("beerWeightKg").textContent = Number(data.beerWeightKg || 0).toFixed(3) + " kg";
+      $("raw").textContent = data.raw ?? "-";
+      $("hx711Ready").textContent = data.hx711Ready ? "Bereit" : "Fehler";
+      $("serverSync").textContent = data.serverSyncEnabled ? (data.serverConnected ? "Verbunden" : "Aktiv") : "Lokal";
+      $("wifiStatus").textContent = "WLAN: " + (data.wifiStatus || "-");
+      $("ipAddress").textContent = "IP: " + (data.ip || "-");
+      $("lastUpdate").textContent = "Aktualisiert: " + new Date().toLocaleTimeString();
+      $("initialSetupPanel").hidden = Boolean(data.setupComplete);
+      setCalibrationState(data);
+    }
+
+    async function refreshStatus() {
+      try {
+        const data = await api("/api/status");
+        updateStatusView(data);
+      } catch (error) {
+        setMessage(error.message, "error");
+      }
+    }
+
+    async function loadSettings() {
+      settings = await api("/api/settings");
+      $("deviceName").value = settings.deviceName || "";
+      $("wifiSsid").value = settings.wifiSsid || "";
+      $("wifiPassword").value = "";
+      $("wifiPassword").placeholder = settings.wifiPasswordConfigured ? "gespeichert" : "";
+      $("measureIntervalMs").value = settings.measureIntervalMs || 1000;
+      $("sampleCount").value = settings.sampleCount || 10;
+      $("unit").value = settings.unit || "kg";
+      $("emptyKegWeightKg").value = Number(settings.emptyKegWeightKg || 0).toFixed(3);
+      $("maxKegVolumeL").value = Number(settings.maxKegVolumeL || 19).toFixed(1);
+      $("serverUrl").value = settings.serverUrl || "";
+      $("serverPort").value = settings.serverPort || 1234;
+      $("deviceToken").value = settings.deviceToken || "";
+      $("serverSyncEnabled").checked = Boolean(settings.serverSyncEnabled);
+    }
+
+    async function runTare(feedbackTarget) {
+      setMessage("Tarieren laeuft ...", "warn", feedbackTarget);
+      try {
+        const data = await api("/api/tare", { method: "POST" });
+        setMessage(data.message + " Rohwert: " + data.rawAverage, "ok", feedbackTarget);
+        await loadSettings();
+        await refreshStatus();
+      } catch (error) {
+        setMessage(error.message, "error", feedbackTarget);
+      }
+    }
+
+    async function runCalibration(inputId, feedbackTarget) {
+      const knownWeightKg = Number($(inputId).value);
+      setMessage("Kalibrierung laeuft ...", "warn", feedbackTarget);
+      try {
+        const data = await api("/api/calibrate", {
+          method: "POST",
+          body: JSON.stringify({ knownWeightKg })
+        });
+        setMessage(data.message + " Faktor: " + Number(data.calibrationFactor || 0).toFixed(2), "ok", feedbackTarget);
+        await loadSettings();
+        await refreshStatus();
+      } catch (error) {
+        setMessage(error.message, "error", feedbackTarget);
+      }
+    }
+
+    $("navDashboard").addEventListener("click", () => showView("dashboard"));
+    $("navSettings").addEventListener("click", () => showView("settings"));
+    $("tareButtonSetup").addEventListener("click", () => runTare($("setupFeedback")));
+    $("tareButtonSettings").addEventListener("click", () => runTare($("settingsFeedback")));
+
+    $("calibrationFormSetup").addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!lastStatus.calibrationAllowed) {
+        setMessage(lastStatus.calibrationBlockReason || "Kalibrierung noch gesperrt.", "warn", $("setupFeedback"));
+        return;
+      }
+      runCalibration("knownWeightKgSetup", $("setupFeedback"));
+    });
+
+    $("calibrationFormSettings").addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!lastStatus.calibrationAllowed) {
+        setMessage(lastStatus.calibrationBlockReason || "Kalibrierung noch gesperrt.", "warn", $("settingsFeedback"));
+        return;
+      }
+      runCalibration("knownWeightKgSettings", $("settingsFeedback"));
+    });
+
+    $("settingsForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const payload = {
+        deviceName: $("deviceName").value,
+        wifiSsid: $("wifiSsid").value,
+        wifiPassword: $("wifiPassword").value,
+        measureIntervalMs: Number($("measureIntervalMs").value),
+        sampleCount: Number($("sampleCount").value),
+        unit: $("unit").value,
+        emptyKegWeightKg: Number($("emptyKegWeightKg").value),
+        maxKegVolumeL: Number($("maxKegVolumeL").value),
+        serverUrl: $("serverUrl").value,
+        serverPort: Number($("serverPort").value),
+        deviceToken: $("deviceToken").value,
+        serverSyncEnabled: $("serverSyncEnabled").checked
+      };
+
+      try {
+        const data = await api("/api/settings", {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+        setMessage(data.message, "ok");
+        await loadSettings();
+        await refreshStatus();
+      } catch (error) {
+        setMessage(error.message, "error");
+      }
+    });
+
+    $("restartButton").addEventListener("click", async () => {
+      try {
+        const data = await api("/api/restart", { method: "POST" });
+        setMessage(data.message, "warn");
+      } catch (error) {
+        setMessage(error.message, "error");
+      }
+    });
+
+    $("factoryResetButton").addEventListener("click", async () => {
+      if (!confirm("Werkseinstellungen zuruecksetzen?")) {
+        return;
+      }
+
+      try {
+        const data = await api("/api/factory-reset", { method: "POST" });
+        setMessage(data.message, "warn");
+      } catch (error) {
+        setMessage(error.message, "error");
+      }
+    });
+
+    (async function init() {
+      try {
+        await loadSettings();
+        await refreshStatus();
+        setInterval(refreshStatus, 2000);
+      } catch (error) {
+        setMessage(error.message, "error");
+      }
+    })();
+  </script>
+</body>
+</html>
