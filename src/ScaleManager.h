@@ -12,10 +12,7 @@ struct ScaleSnapshot {
   double weightKg;
   bool hx711Ready;
   uint32_t lastMeasurementMs;
-  long rawRange;
-  long stabilityThreshold;
   uint8_t bufferedSamples;
-  uint32_t warmupRemainingMs;
   bool calibrationAllowed;
 };
 
@@ -45,13 +42,10 @@ class ScaleManager {
 
  private:
   static constexpr uint8_t MAX_AVERAGE_SAMPLES = 50;
-  static constexpr uint32_t CALIBRATION_WARMUP_MS = 300000;
-  static constexpr uint8_t CALIBRATION_MIN_STABLE_SAMPLES = 5;
 
   bool readRawWithTimeout(long& value, uint32_t timeoutMs);
   bool collectAverage(uint8_t samples, long& average, uint32_t perSampleTimeoutMs);
   uint8_t configuredSampleCount(uint8_t minimum = 1) const;
-  long stabilityThresholdForConfig(const AppConfig& config) const;
   void pushRawLocked(long raw);
   double averageRawLocked() const;
 
@@ -68,7 +62,7 @@ class ScaleManager {
   uint32_t _lastMeasurementMs = 0;
 
   long _rawBuffer[MAX_AVERAGE_SAMPLES] = {0};
-  uint8_t _bufferSize = 10;
+  uint8_t _bufferSize = 1;
   uint8_t _bufferIndex = 0;
   uint8_t _bufferCount = 0;
 

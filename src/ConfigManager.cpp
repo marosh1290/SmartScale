@@ -123,8 +123,8 @@ void ConfigManager::loadDefaults(AppConfig& target) const {
   target.wifiPassword = "";
   target.tareOffset = 0;
   target.calibrationFactor = 21500.0f;
-  target.sampleCount = 10;
-  target.measureIntervalMs = 1000;
+  target.sampleCount = 1;
+  target.measureIntervalMs = 100;
   target.unit = "kg";
   target.emptyKegWeightKg = 0.0f;
   target.maxKegVolumeL = 19.0f;

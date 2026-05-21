@@ -247,6 +247,32 @@
       color: var(--danger);
     }
 
+    .readout {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px 18px;
+      padding: 4px 0 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .readout div {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .readout span {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 650;
+    }
+
+    .readout strong {
+      font-size: 1rem;
+      font-weight: 750;
+      overflow-wrap: anywhere;
+    }
+
     @media (max-width: 640px) {
       header {
         grid-template-columns: 1fr;
@@ -294,7 +320,7 @@
             <strong id="weight">-</strong>
           </div>
           <div class="metric primary">
-            <span>Fuellstand</span>
+            <span>Füllstand</span>
             <strong id="fillPercent">-</strong>
           </div>
           <div class="metric">
@@ -306,16 +332,8 @@
             <strong id="beerWeightKg">-</strong>
           </div>
           <div class="metric">
-            <span>Rohwert</span>
-            <strong id="raw">-</strong>
-          </div>
-          <div class="metric">
             <span>HX711</span>
             <strong id="hx711Ready">-</strong>
-          </div>
-          <div class="metric">
-            <span>Betriebstemperatur</span>
-            <strong id="warmupState">-</strong>
           </div>
           <div class="metric">
             <span>Server-Sync</span>
@@ -347,6 +365,20 @@
     <div id="settingsView" class="view" hidden>
       <section class="panel">
         <h2>Waage</h2>
+        <div class="readout">
+          <div>
+            <span>Rohwert</span>
+            <strong id="settingsRaw">-</strong>
+          </div>
+          <div>
+            <span>Tara-Offset</span>
+            <strong id="settingsTareOffset">-</strong>
+          </div>
+          <div>
+            <span>Kalibrierfaktor</span>
+            <strong id="settingsCalibrationFactor">-</strong>
+          </div>
+        </div>
         <div class="actions">
           <button id="tareButtonSettings" type="button">Tarieren</button>
         </div>
@@ -369,7 +401,7 @@
         <form id="settingsForm">
           <div class="form-grid">
             <label>
-              Geraetename
+              Gerätename
               <input id="deviceName" type="text" maxlength="48" autocomplete="off">
             </label>
             <label>
@@ -400,7 +432,7 @@
               <input id="emptyKegWeightKg" type="number" min="0" max="80" step="0.001" inputmode="decimal">
             </label>
             <label>
-              Maximaler Fuellstand in Liter
+              Maximaler Füllstand in Liter
               <input id="maxKegVolumeL" type="number" min="0.1" max="200" step="0.1" inputmode="decimal">
             </label>
             <label>
@@ -412,7 +444,7 @@
               <input id="serverPort" type="number" min="1" max="65535" step="1">
             </label>
             <label>
-              Geraete-Token
+              Geräte-Token
               <input id="deviceToken" type="text" autocomplete="off">
             </label>
           </div>
@@ -423,7 +455,7 @@
           <div class="actions">
             <button type="submit">Einstellungen speichern</button>
             <button class="secondary" id="restartButton" type="button">Neustart</button>
-            <button class="danger" id="factoryResetButton" type="button">Werkseinstellungen zuruecksetzen</button>
+            <button class="danger" id="factoryResetButton" type="button">Werkseinstellungen zurücksetzen</button>
           </div>
         </form>
       </section>
@@ -465,16 +497,9 @@
 
     function formatWeight(weightKg, unit) {
       if (unit === "g") {
-        return (Number(weightKg) * 1000).toFixed(0) + " g";
+        return (Number(weightKg || 0) * 1000).toFixed(2) + " g";
       }
-      return Number(weightKg || 0).toFixed(3) + " kg";
-    }
-
-    function formatMs(ms) {
-      const totalSeconds = Math.ceil(Number(ms || 0) / 1000);
-      const minutes = Math.floor(totalSeconds / 60);
-      const seconds = totalSeconds % 60;
-      return minutes + ":" + String(seconds).padStart(2, "0");
+      return Number(weightKg || 0).toFixed(2) + " kg";
     }
 
     function setCalibrationState(data) {
@@ -484,16 +509,6 @@
         $(id).disabled = !ready;
         $(id).title = ready ? "" : reason;
       }
-
-      if (data.warmupRemainingMs > 0) {
-        $("warmupState").textContent = formatMs(data.warmupRemainingMs);
-      } else if (!data.hx711Ready) {
-        $("warmupState").textContent = "HX711";
-      } else if (!ready) {
-        $("warmupState").textContent = "Stabilisiert";
-      } else {
-        $("warmupState").textContent = "Bereit";
-      }
     }
 
     function updateStatusView(data) {
@@ -501,10 +516,12 @@
       const unit = data.unit || settings.unit || "kg";
       $("title").textContent = data.deviceName || "SmartScale";
       $("weight").textContent = formatWeight(data.weightKg || 0, unit);
-      $("fillPercent").textContent = Number(data.fillPercent || 0).toFixed(1) + " %";
+      $("fillPercent").textContent = Number(data.fillPercent || 0).toFixed(2) + " %";
       $("fillLiters").textContent = Number(data.fillLiters || 0).toFixed(2) + " l";
-      $("beerWeightKg").textContent = Number(data.beerWeightKg || 0).toFixed(3) + " kg";
-      $("raw").textContent = data.raw ?? "-";
+      $("beerWeightKg").textContent = Number(data.beerWeightKg || 0).toFixed(2) + " kg";
+      $("settingsRaw").textContent = data.raw ?? "-";
+      $("settingsTareOffset").textContent = data.tareOffset ?? "-";
+      $("settingsCalibrationFactor").textContent = Number(data.calibrationFactor || 0).toFixed(2);
       $("hx711Ready").textContent = data.hx711Ready ? "Bereit" : "Fehler";
       $("serverSync").textContent = data.serverSyncEnabled ? (data.serverConnected ? "Verbunden" : "Aktiv") : "Lokal";
       $("wifiStatus").textContent = "WLAN: " + (data.wifiStatus || "-");
@@ -529,8 +546,8 @@
       $("wifiSsid").value = settings.wifiSsid || "";
       $("wifiPassword").value = "";
       $("wifiPassword").placeholder = settings.wifiPasswordConfigured ? "gespeichert" : "";
-      $("measureIntervalMs").value = settings.measureIntervalMs || 1000;
-      $("sampleCount").value = settings.sampleCount || 10;
+      $("measureIntervalMs").value = settings.measureIntervalMs || 100;
+      $("sampleCount").value = settings.sampleCount || 1;
       $("unit").value = settings.unit || "kg";
       $("emptyKegWeightKg").value = Number(settings.emptyKegWeightKg || 0).toFixed(3);
       $("maxKegVolumeL").value = Number(settings.maxKegVolumeL || 19).toFixed(1);
@@ -541,10 +558,10 @@
     }
 
     async function runTare(feedbackTarget) {
-      setMessage("Tarieren laeuft ...", "warn", feedbackTarget);
+      setMessage("Tarieren läuft ...", "warn", feedbackTarget);
       try {
         const data = await api("/api/tare", { method: "POST" });
-        setMessage(data.message + " Rohwert: " + data.rawAverage, "ok", feedbackTarget);
+        setMessage(data.message, "ok", feedbackTarget);
         await loadSettings();
         await refreshStatus();
       } catch (error) {
@@ -554,7 +571,7 @@
 
     async function runCalibration(inputId, feedbackTarget) {
       const knownWeightKg = Number($(inputId).value);
-      setMessage("Kalibrierung laeuft ...", "warn", feedbackTarget);
+      setMessage("Kalibrierung läuft ...", "warn", feedbackTarget);
       try {
         const data = await api("/api/calibrate", {
           method: "POST",
@@ -631,7 +648,7 @@
     });
 
     $("factoryResetButton").addEventListener("click", async () => {
-      if (!confirm("Werkseinstellungen zuruecksetzen?")) {
+      if (!confirm("Werkseinstellungen zurücksetzen?")) {
         return;
       }
 

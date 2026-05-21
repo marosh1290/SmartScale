@@ -82,8 +82,6 @@ void ScaleManager::applyConfig() {
 ScaleSnapshot ScaleManager::snapshot() const {
   ScaleSnapshot result;
   const AppConfig config = _configManager != nullptr ? _configManager->getConfig() : AppConfig{};
-  long rawMin = 0;
-  long rawMax = 0;
 
   portENTER_CRITICAL(&_mux);
   result.raw = _raw;
@@ -93,29 +91,9 @@ ScaleSnapshot ScaleManager::snapshot() const {
   result.hx711Ready = _hx711Ready;
   result.lastMeasurementMs = _lastMeasurementMs;
   result.bufferedSamples = _bufferCount;
-  if (_bufferCount > 0) {
-    rawMin = _rawBuffer[0];
-    rawMax = _rawBuffer[0];
-    for (uint8_t i = 1; i < _bufferCount; ++i) {
-      if (_rawBuffer[i] < rawMin) {
-        rawMin = _rawBuffer[i];
-      }
-      if (_rawBuffer[i] > rawMax) {
-        rawMax = _rawBuffer[i];
-      }
-    }
-  }
   portEXIT_CRITICAL(&_mux);
 
-  const uint32_t now = millis();
-  result.rawRange = result.bufferedSamples > 0 ? rawMax - rawMin : 0;
-  result.stabilityThreshold = stabilityThresholdForConfig(config);
-  result.warmupRemainingMs = now >= CALIBRATION_WARMUP_MS ? 0 : CALIBRATION_WARMUP_MS - now;
-  result.calibrationAllowed =
-      result.hx711Ready &&
-      result.warmupRemainingMs == 0 &&
-      result.bufferedSamples >= CALIBRATION_MIN_STABLE_SAMPLES &&
-      result.rawRange <= result.stabilityThreshold;
+  result.calibrationAllowed = result.hx711Ready;
 
   return result;
 }
@@ -125,15 +103,6 @@ String ScaleManager::calibrationBlockReason() const {
 
   if (!state.hx711Ready) {
     return "Kalibrierung gesperrt: HX711 liefert aktuell keine Werte.";
-  }
-  if (state.warmupRemainingMs > 0) {
-    return "Kalibrierung gesperrt: Betriebstemperatur noch nicht erreicht.";
-  }
-  if (state.bufferedSamples < CALIBRATION_MIN_STABLE_SAMPLES) {
-    return "Kalibrierung gesperrt: Es liegen noch nicht genug stabile Messwerte vor.";
-  }
-  if (state.rawRange > state.stabilityThreshold) {
-    return "Kalibrierung gesperrt: Die Rohwerte schwanken noch zu stark.";
   }
 
   return "";
@@ -152,14 +121,14 @@ ScaleOperationResult ScaleManager::tare(uint8_t samples) {
   }
 
   _operationActive = true;
-  samples = samples == 0 ? configuredSampleCount(5) : samples;
+  samples = samples == 0 ? configuredSampleCount() : samples;
 
   long rawAverage = 0;
   const bool ok = collectAverage(samples, rawAverage, SAMPLE_TIMEOUT_MS);
   _operationActive = false;
 
   if (!ok) {
-    result.message = "Tarieren fehlgeschlagen: HX711 liefert keine stabilen Werte.";
+    result.message = "Tarieren fehlgeschlagen: HX711 liefert keine Werte.";
     return result;
   }
 
@@ -207,14 +176,14 @@ ScaleOperationResult ScaleManager::calibrate(float knownWeightKg, uint8_t sample
   }
 
   _operationActive = true;
-  samples = samples == 0 ? configuredSampleCount(5) : samples;
+  samples = samples == 0 ? configuredSampleCount() : samples;
 
   long rawAverage = 0;
   const bool ok = collectAverage(samples, rawAverage, SAMPLE_TIMEOUT_MS);
   _operationActive = false;
 
   if (!ok) {
-    result.message = "Kalibrierung fehlgeschlagen: HX711 liefert keine stabilen Werte.";
+    result.message = "Kalibrierung fehlgeschlagen: HX711 liefert keine Werte.";
     return result;
   }
 
@@ -310,12 +279,6 @@ uint8_t ScaleManager::configuredSampleCount(uint8_t minimum) const {
     samples = MAX_AVERAGE_SAMPLES;
   }
   return static_cast<uint8_t>(samples);
-}
-
-long ScaleManager::stabilityThresholdForConfig(const AppConfig& config) const {
-  const float factor = fabs(config.calibrationFactor) < 1.0f ? 21500.0f : fabs(config.calibrationFactor);
-  const long threshold = static_cast<long>(factor * 0.02f);
-  return threshold < 250 ? 250 : threshold;
 }
 
 void ScaleManager::pushRawLocked(long raw) {

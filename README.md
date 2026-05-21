@@ -58,7 +58,7 @@ Das Dashboard zeigt Gewicht, Fuellstand in Prozent, Fuellstand in Liter, Biergew
 
 Beim Erst-Setup sind Tarieren und Kalibrieren direkt im Dashboard sichtbar. Nach dem ersten erfolgreichen Tarieren und Kalibrieren sind diese Aktionen nur noch im Menue `Einstellungen` sichtbar.
 
-Die Kalibrierung ist erst nach ca. 5 Minuten Betriebszeit freigeschaltet. Danach muss der HX711 Werte liefern und die letzten Messwerte muessen innerhalb der Stabilitaetsschwelle liegen.
+Die Kalibrierung ist freigeschaltet, sobald der HX711 Werte liefert.
 
 ## Tarieren
 
@@ -70,11 +70,10 @@ Nach Abschluss erscheint im Webinterface eine Rueckmeldung mit dem gespeicherten
 
 ## Kalibrieren
 
-1. Mindestens 5 Minuten nach Einschalten warten.
-2. Zuerst tarieren.
-3. Bekanntes Referenzgewicht auflegen.
-4. Referenzgewicht in kg eintragen, zum Beispiel `1.000`.
-5. `Kalibrieren` druecken.
+1. Zuerst tarieren.
+2. Bekanntes Referenzgewicht auflegen.
+3. Referenzgewicht in kg eintragen, zum Beispiel `1.000`.
+4. `Kalibrieren` druecken.
 
 Berechnung:
 
@@ -83,7 +82,7 @@ calibrationFactor = (rawAverage - tareOffset) / knownWeightKg
 weightKg = (raw - tareOffset) / calibrationFactor
 ```
 
-Die Firmware speichert keinen Faktor, wenn das Referenzgewicht <= 0 ist, der HX711 keine Werte liefert, die Rohwertaenderung zu klein ist oder die Warmup/Stabilitaetspruefung noch nicht bestanden ist.
+Die Firmware speichert keinen Faktor, wenn das Referenzgewicht <= 0 ist, der HX711 keine Werte liefert oder die Rohwertaenderung zu klein ist.
 
 ## Keg-Funktionen
 
@@ -192,5 +191,5 @@ Die internen NVS-Schluessel sind teilweise kuerzer, weil ESP32-NVS-Schluessel au
 - `smartscale.local` geht nicht: IP-Adresse aus dem seriellen Monitor verwenden.
 - WLAN verbindet nicht: SSID/Passwort speichern, Neustart ausloesen und im seriellen Monitor auf `[WiFi] Verbunden` pruefen.
 - HX711 zeigt Fehler: Verdrahtung an GPIO4/GPIO5, 3V3 und GND pruefen.
-- Kalibrierung bleibt gesperrt: 5 Minuten warten, Gewicht ruhig stellen und Rohwert-Schwankung beobachten.
+- Kalibrierung bleibt gesperrt: HX711-Verkabelung und Stromversorgung pruefen.
 - Unruhige Werte: `Mittelwerte` erhoehen oder mechanische Befestigung der Waegezelle pruefen.

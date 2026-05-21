@@ -126,10 +126,7 @@ void WebServerManager::handleStatus(AsyncWebServerRequest* request) {
   document["tareOffset"] = scale.tareOffset;
   document["calibrationFactor"] = scale.calibrationFactor;
   document["hx711Ready"] = scale.hx711Ready;
-  document["rawRange"] = scale.rawRange;
-  document["stabilityThreshold"] = scale.stabilityThreshold;
   document["bufferedSamples"] = scale.bufferedSamples;
-  document["warmupRemainingMs"] = scale.warmupRemainingMs;
   document["calibrationAllowed"] = scale.calibrationAllowed;
   document["calibrationBlockReason"] = calibrationReason;
   document["tareCompleted"] = config.tareCompleted;
